@@ -40,29 +40,48 @@ function HomePage() {
 
 function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState({});
   function handleSubmit(event) {
     event.preventDefault();
-    if (event.currentTarget.reportValidity()) setSubmitted(true);
+    const form = event.currentTarget;
+    const values = Object.fromEntries(new FormData(form));
+    const nextErrors = {};
+    if (!values.name?.trim()) nextErrors.name = 'Enter your name.';
+    else if (values.name.trim().length < 2) nextErrors.name = 'Name must be at least 2 characters.';
+    if (!values.email?.trim()) nextErrors.email = 'Enter your email address.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) nextErrors.email = 'Enter a valid email address.';
+    if (values.phone?.trim() && values.phone.replace(/\D/g, '').length < 7) nextErrors.phone = 'Enter a valid phone number or leave this blank.';
+    if (!values['project-type']) nextErrors['project-type'] = 'Choose a project type.';
+    if (!values.details?.trim()) nextErrors.details = 'Add a short description of your project.';
+    else if (values.details.trim().length < 20) nextErrors.details = 'Please add a little more detail (at least 20 characters).';
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) {
+      setSubmitted(false);
+      form.querySelector(`[name="${Object.keys(nextErrors)[0]}"]`)?.focus();
+      return;
+    }
+    setSubmitted(true);
   }
   return <main>
     <section className="contact-hero"><p className="eyebrow">Contact / Request a quote</p><h1>Tell us what you're building.</h1><p>Share a few details and we’ll be in touch to talk through your project. The fields below are a starting point and can be tailored to your process.</p></section>
     <section className="enquiry-layout">
       <aside className="contact-aside"><p className="eyebrow">Start here</p><h2>A good project starts with a conversation.</h2><p>Not sure about all the details yet? That’s okay. Tell us what you can, and we’ll take it from there.</p><div className="contact-details"><div><span>Email</span><a href="mailto:hello@example.com">hello@example.com</a></div><div><span>Phone</span><a href="tel:+10000000000">+1 (000) 000-0000</a></div><div><span>Service area</span><p>Your town and surrounding areas</p></div></div><p className="placeholder-note">Contact information shown is placeholder text.</p></aside>
-      <form id="enquiry-form" className="enquiry-form" onSubmit={handleSubmit}>
+      <form id="enquiry-form" className="enquiry-form" onSubmit={handleSubmit} onChange={() => setSubmitted(false)} noValidate>
         <h2>Project enquiry</h2><p className="form-intro">Fields marked <span>*</span> are required.</p>
+        {Object.keys(errors).length > 0 && <div className="error-summary" role="alert">Please review the highlighted fields and try again.</div>}
         <div className="form-grid">
-          <label>Full name <span>*</span><input name="name" autoComplete="name" required placeholder="Your name" /></label>
-          <label>Email address <span>*</span><input type="email" name="email" autoComplete="email" required placeholder="you@example.com" /></label>
-          <label>Phone number<input type="tel" name="phone" autoComplete="tel" placeholder="Your phone number" /></label>
-          <label>Project type <span>*</span><select name="project-type" required defaultValue=""><option value="" disabled>Select a project type</option><option>New build</option><option>Renovation</option><option>Extension</option><option>Other</option></select></label>
+          <label>Full name <span>*</span><input className={errors.name ? 'invalid' : ''} aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? 'name-error' : undefined} name="name" autoComplete="name" placeholder="Your name" />{errors.name && <small className="field-error" id="name-error">{errors.name}</small>}</label>
+          <label>Email address <span>*</span><input className={errors.email ? 'invalid' : ''} aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'email-error' : undefined} type="email" name="email" autoComplete="email" placeholder="you@example.com" />{errors.email && <small className="field-error" id="email-error">{errors.email}</small>}</label>
+          <label>Phone number<input className={errors.phone ? 'invalid' : ''} aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? 'phone-error' : undefined} type="tel" name="phone" autoComplete="tel" placeholder="Your phone number" />{errors.phone && <small className="field-error" id="phone-error">{errors.phone}</small>}</label>
+          <label>Project type <span>*</span><select className={errors['project-type'] ? 'invalid' : ''} aria-invalid={Boolean(errors['project-type'])} aria-describedby={errors['project-type'] ? 'type-error' : undefined} name="project-type" defaultValue=""><option value="" disabled>Select a project type</option><option>New build</option><option>Renovation</option><option>Extension</option><option>Other</option></select>{errors['project-type'] && <small className="field-error" id="type-error">{errors['project-type']}</small>}</label>
           <label>Project location<input name="location" autoComplete="address-level2" placeholder="Town or postcode" /></label>
           <label>Estimated budget<select name="budget" defaultValue=""><option value="">Select a range (optional)</option><option>Still working it out</option><option>Under $25,000</option><option>$25,000–$75,000</option><option>$75,000–$150,000</option><option>$150,000+</option></select></label>
           <label>Ideal start date<input type="month" name="timeline" /></label>
-          <label className="full-width">Tell us a little about your project <span>*</span><textarea name="details" rows="5" required placeholder="What would you like to build or change?" /></label>
+          <label className="full-width">Tell us a little about your project <span>*</span><textarea className={errors.details ? 'invalid' : ''} aria-invalid={Boolean(errors.details)} aria-describedby={errors.details ? 'details-error' : undefined} name="details" rows="5" placeholder="What would you like to build or change?" />{errors.details && <small className="field-error" id="details-error">{errors.details}</small>}</label>
         </div>
         <button className="button" type="submit">Send enquiry <span aria-hidden="true">→</span></button>
         <p className="form-note">This demo form does not send data yet. Connect it to your preferred email or form service to receive enquiries.</p>
-        <p className="form-status" role="status" aria-live="polite">{submitted ? 'Thanks for sharing your project. This demo form is ready to connect to an enquiry service.' : ''}</p>
+        {submitted && <div className="success-message" role="status" aria-live="polite"><strong>Thanks for your enquiry.</strong><span>Your details have been checked. This demo form isn’t connected to a submission service yet, so your message hasn’t been sent.</span></div>}
       </form>
     </section>
   </main>;
