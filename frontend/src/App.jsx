@@ -39,9 +39,10 @@ function HomePage() {
 }
 
 function ContactPage() {
-  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [serverMessage, setServerMessage] = useState(null);
   const [errors, setErrors] = useState({});
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const form = event.currentTarget;
     const values = Object.fromEntries(new FormData(form));
@@ -56,17 +57,39 @@ function ContactPage() {
     else if (values.details.trim().length < 20) nextErrors.details = 'Please add a little more detail (at least 20 characters).';
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
-      setSubmitted(false);
+      setServerMessage(null);
       form.querySelector(`[name="${Object.keys(nextErrors)[0]}"]`)?.focus();
       return;
     }
-    setSubmitted(true);
+    setSubmitting(true);
+    setServerMessage(null);
+    const payload = { ...values, name: values.name.trim(), email: values.email.trim(), details: values.details.trim() };
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl.replace(/\/$/, '')}/api/enquiries`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Unable to send your enquiry. Please try again.');
+      setServerMessage({ type: 'success', text: result.message || 'Enquiry received.' });
+      form.reset();
+      setErrors({});
+    } catch (error) {
+      setServerMessage({
+        type: 'error',
+        text: error instanceof TypeError ? 'Could not reach the enquiry server. Please try again shortly.' : error.message,
+      });
+    } finally {
+      setSubmitting(false);
+    }
   }
   return <main>
     <section className="contact-hero"><p className="eyebrow">Contact / Request a quote</p><h1>Tell us what you're building.</h1><p>Share a few details and we’ll be in touch to talk through your project. The fields below are a starting point and can be tailored to your process.</p></section>
     <section className="enquiry-layout">
       <aside className="contact-aside"><p className="eyebrow">Start here</p><h2>A good project starts with a conversation.</h2><p>Not sure about all the details yet? That’s okay. Tell us what you can, and we’ll take it from there.</p><div className="contact-details"><div><span>Email</span><a href="mailto:hello@example.com">hello@example.com</a></div><div><span>Phone</span><a href="tel:+10000000000">+1 (000) 000-0000</a></div><div><span>Service area</span><p>Your town and surrounding areas</p></div></div><p className="placeholder-note">Contact information shown is placeholder text.</p></aside>
-      <form id="enquiry-form" className="enquiry-form" onSubmit={handleSubmit} onChange={() => setSubmitted(false)} noValidate>
+      <form id="enquiry-form" className="enquiry-form" onSubmit={handleSubmit} onChange={() => setServerMessage(null)} noValidate>
         <h2>Project enquiry</h2><p className="form-intro">Fields marked <span>*</span> are required.</p>
         {Object.keys(errors).length > 0 && <div className="error-summary" role="alert">Please review the highlighted fields and try again.</div>}
         <div className="form-grid">
@@ -79,9 +102,8 @@ function ContactPage() {
           <label>Ideal start date<input type="month" name="timeline" /></label>
           <label className="full-width">Tell us a little about your project <span>*</span><textarea className={errors.details ? 'invalid' : ''} aria-invalid={Boolean(errors.details)} aria-describedby={errors.details ? 'details-error' : undefined} name="details" rows="5" placeholder="What would you like to build or change?" />{errors.details && <small className="field-error" id="details-error">{errors.details}</small>}</label>
         </div>
-        <button className="button" type="submit">Send enquiry <span aria-hidden="true">→</span></button>
-        <p className="form-note">This demo form does not send data yet. Connect it to your preferred email or form service to receive enquiries.</p>
-        {submitted && <div className="success-message" role="status" aria-live="polite"><strong>Thanks for your enquiry.</strong><span>Your details have been checked. This demo form isn’t connected to a submission service yet, so your message hasn’t been sent.</span></div>}
+        <button className="button" type="submit" disabled={submitting}>{submitting ? 'Sending…' : 'Send enquiry'} <span aria-hidden="true">→</span></button>
+        {serverMessage && <div className={serverMessage.type === 'success' ? 'success-message' : 'error-summary'} role={serverMessage.type === 'success' ? 'status' : 'alert'} aria-live="polite">{serverMessage.text}</div>}
       </form>
     </section>
   </main>;
