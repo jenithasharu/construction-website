@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ArrowIcon from './ArrowIcon.jsx';
 
 // Validates and sends the project enquiry to the backend.
 export default function EnquiryForm() {
@@ -65,7 +66,7 @@ export default function EnquiryForm() {
       <label>Ideal start date<input type="month" name="timeline" /></label>
       <label className="col-span-full max-[760px]:col-auto [&_textarea]:min-h-[122px] [&_textarea]:resize-y">Tell us a little about your project <span>*</span><textarea className={"min-h-[122px] resize-y " + (errors.details ? "invalid" : "")} aria-invalid={Boolean(errors.details)} aria-describedby={errors.details ? 'details-error' : undefined} name="details" rows="5" placeholder="What would you like to build or change?" />{errors.details && <small className="mt-[5px] block text-[11px] font-medium text-[#a04b35]" id="details-error">{errors.details}</small>}</label>
     </div>
-    <button className="mt-[22px] inline-flex min-h-[52px] items-center justify-center gap-[23px] rounded-[3px] border border-green bg-green px-[22px] text-[14px] font-semibold text-white transition duration-200 hover:-translate-y-px hover:bg-green-dark disabled:cursor-wait" type="submit" disabled={submitting}>{submitting ? 'Sendingâ€¦' : 'Send enquiry'} <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2.5 8h10m-4-4 4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
+    <button className="mt-[22px] inline-flex min-h-[52px] items-center justify-center gap-[23px] rounded-[3px] border border-green bg-green px-[22px] text-[14px] font-semibold text-white transition duration-200 hover:-translate-y-px hover:bg-green-dark disabled:cursor-wait" type="submit" disabled={submitting}>{submitting ? 'Sendingâ€¦' : 'Send enquiry'} <ArrowIcon /></button>
     {serverMessage && <div className={serverMessage.type === "success" ? "mt-[18px] grid gap-1 border-l-[3px] border-green bg-[#eef3e9] px-[17px] py-[15px] text-[13px] text-green [&>span]:text-[12px] [&>span]:text-[#526258]" : "my-4 border-l-[3px] border-[#a04b35] bg-[#fbf1ed] px-[14px] py-3 text-[13px] text-[#843d2c]"} role={serverMessage.type === 'success' ? 'status' : 'alert'} aria-live="polite">{serverMessage.text}</div>}
   </form>;
 }
