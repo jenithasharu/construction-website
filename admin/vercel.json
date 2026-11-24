@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://construction-backend-mq4u.onrender.com/api/:path*"
+    }
+  ]
+}
